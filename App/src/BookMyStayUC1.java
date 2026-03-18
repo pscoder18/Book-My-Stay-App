@@ -1,46 +1,21 @@
 import java.util.Scanner;
 
-/**
- * =====================================================================
- * CLASS - InvalidBookingException
- * =====================================================================
- * This custom exception represents domain-specific invalid booking
- * scenarios. Using a custom exception makes error handling clearer.
- */
 class InvalidBookingException extends Exception {
     public InvalidBookingException(String message) {
         super(message);
     }
 }
 
-/**
- * =====================================================================
- * CLASS - RoomInventory
- * =====================================================================
- * Manages hotel room availability and prevents negative inventory.
- */
 class RoomInventory {
     // Logic for tracking available rooms would be implemented here
 }
 
-/**
- * =====================================================================
- * CLASS - BookingRequestQueue
- * =====================================================================
- * Handles the queuing of validated booking requests.
- */
 class BookingRequestQueue {
     public void addRequest(String guestName, String roomType) {
         // Process the valid booking request
     }
 }
 
-/**
- * =====================================================================
- * CLASS - ReservationValidator
- * =====================================================================
- * Centralizes validation rules to avoid duplication and inconsistency.
- */
 class ReservationValidator {
     /**
      * Validates booking input.

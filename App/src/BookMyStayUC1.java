@@ -1,80 +1,86 @@
 import java.util.*;
 
-// Reservation Class (Represents booking intent)
-class Reservation {
-    private String guestName;
-    private String roomType;
+// CLASS: AddOnService
+class AddOnService {
 
-    public Reservation(String guestName, String roomType) {
-        this.guestName = guestName;
-        this.roomType = roomType;
+    private String serviceName;
+    private double cost;
+
+    public AddOnService(String serviceName, double cost) {
+        this.serviceName = serviceName;
+        this.cost = cost;
     }
 
-    public String getGuestName() {
-        return guestName;
+    public String getServiceName() {
+        return serviceName;
     }
 
-    public String getRoomType() {
-        return roomType;
-    }
-
-    @Override
-    public String toString() {
-        return "Guest: " + guestName + " | Room Type: " + roomType;
+    public double getCost() {
+        return cost;
     }
 }
 
-// Booking Request Queue (FIFO)
-class BookingRequestQueue {
-    private Queue<Reservation> queue;
+// CLASS: AddOnServiceManager
+class AddOnServiceManager {
 
-    public BookingRequestQueue() {
-        queue = new LinkedList<>();
+    // Key -> Reservation ID
+    // Value -> List of services
+    private Map<String, List<AddOnService>> servicesByReservation;
+
+    public AddOnServiceManager() {
+        servicesByReservation = new HashMap<>();
     }
 
-    // Add booking request
-    public void addRequest(Reservation reservation) {
-        queue.offer(reservation);
-        System.out.println("Request added: " + reservation);
+    // Add service to reservation
+    public void addService(String reservationId, AddOnService service) {
+
+        servicesByReservation.putIfAbsent(reservationId, new ArrayList<>());
+        servicesByReservation.get(reservationId).add(service);
     }
 
-    // View all queued requests
-    public void displayQueue() {
-        System.out.println("\n--- Booking Request Queue (FIFO Order) ---");
+    // Calculate total cost
+    public double calculateTotalServiceCost(String reservationId) {
 
-        if (queue.isEmpty()) {
-            System.out.println("No booking requests.");
-            return;
+        double total = 0.0;
+
+        List<AddOnService> services = servicesByReservation.get(reservationId);
+
+        if (services != null) {
+            for (AddOnService service : services) {
+                total += service.getCost();
+            }
         }
 
-        for (Reservation r : queue) {
-            System.out.println(r);
-        }
+        return total;
     }
 }
 
-// Main Class
+// MAIN CLASS
 public class BookMyStayUC1 {
 
     public static void main(String[] args) {
 
-        System.out.println("===== Book My Stay App =====");
-        System.out.println("Version: v5.0");
-        System.out.println("============================");
+        System.out.println("===== Add-On Service Selection =====");
 
-        // Step 1: Initialize Booking Queue
-        BookingRequestQueue bookingQueue = new BookingRequestQueue();
+        AddOnServiceManager manager = new AddOnServiceManager();
 
-        // Step 2: Simulate Guest Booking Requests (Arrival Order)
-        bookingQueue.addRequest(new Reservation("Hemanth", "Single"));
-        bookingQueue.addRequest(new Reservation("Arun", "Double"));
-        bookingQueue.addRequest(new Reservation("Priya", "Suite"));
-        bookingQueue.addRequest(new Reservation("Kiran", "Single"));
+        String reservationId = "Single-1";
 
-        // Step 3: Display Queue (FIFO Order)
-        bookingQueue.displayQueue();
+        // Create services
+        AddOnService breakfast = new AddOnService("Breakfast", 500);
+        AddOnService spa = new AddOnService("Spa", 300);
+        AddOnService airportPickup = new AddOnService("Airport Pickup", 700);
 
-        System.out.println("\nAll requests stored in arrival order (FIFO).");
-        System.out.println("No rooms allocated yet. Waiting for processing stage.");
+        // Add services
+        manager.addService(reservationId, breakfast);
+        manager.addService(reservationId, spa);
+        manager.addService(reservationId, airportPickup);
+
+        // Calculate total
+        double totalCost = manager.calculateTotalServiceCost(reservationId);
+
+        // Output
+        System.out.println("Reservation ID: " + reservationId);
+        System.out.println("Total Add-On Cost: " + totalCost);
     }
 }

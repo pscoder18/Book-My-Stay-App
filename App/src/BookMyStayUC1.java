@@ -1,83 +1,104 @@
-import java.util.Scanner;
+import java.util.LinkedList;
+import java.util.Queue;
 
-class InvalidBookingException extends Exception {
-    public InvalidBookingException(String message) {
-        super(message);
-    }
-}
-
+/**
+ * =====================================================================
+ * CLASS - RoomInventory (Thread-Safe)
+ * =====================================================================
+ */
 class RoomInventory {
-    // Logic for tracking available rooms would be implemented here
-}
+    private int availableRooms = 5; // Shared mutable state
 
-class BookingRequestQueue {
-    public void addRequest(String guestName, String roomType) {
-        // Process the valid booking request
+    /**
+     * Synchronized method to ensure room allocation is a critical section.
+     * Prevents double-booking and negative inventory.
+     */
+    public synchronized boolean allocateRoom(String guestName) {
+        if (availableRooms > 0) {
+            System.out.println("[Thread " + Thread.currentThread().getId() + "] " +
+                    "Allocating room for: " + guestName);
+            availableRooms--;
+            System.out.println("Remaining rooms: " + availableRooms);
+            return true;
+        } else {
+            System.out.println("Booking failed for " + guestName + ": No rooms available.");
+            return false;
+        }
     }
 }
 
-class ReservationValidator {
-    /**
-     * Validates booking input.
-     * @throws InvalidBookingException if validation rules are violated.
-     */
-    public void validate(String guestName, String roomType, RoomInventory inventory)
-            throws InvalidBookingException {
+/**
+ * =====================================================================
+ * CLASS - BookingRequest
+ * =====================================================================
+ */
+class BookingRequest {
+    String guestName;
+    String roomType;
 
-        // Rule 1: Guest name cannot be empty
-        if (guestName == null || guestName.trim().isEmpty()) {
-            throw new InvalidBookingException("Guest name cannot be empty.");
-        }
-
-        // Rule 2: Room type must match allowed values exactly (Case Sensitive)
-        if (!(roomType.equals("Single") || roomType.equals("Double") || roomType.equals("Suite"))) {
-            throw new InvalidBookingException("Invalid room type selected.");
-        }
-
-        // Rule 3: Additional checks for inventory state could be added here
+    public BookingRequest(String guestName, String roomType) {
+        this.guestName = guestName;
+        this.roomType = roomType;
     }
 }
 
 public class BookMyStayUC1 {
 
-    /**
-     * Application entry point.
-     */
     public static void main(String[] args) {
-        // Display application header
-        System.out.println("Booking Validation");
+        System.out.println("Concurrent Booking Simulation Started...\n");
 
-        Scanner scanner = new Scanner(System.in);
-
-        // Initialize required components
         RoomInventory inventory = new RoomInventory();
-        ReservationValidator validator = new ReservationValidator();
-        BookingRequestQueue bookingQueue = new BookingRequestQueue();
+        Queue<BookingRequest> bookingQueue = new LinkedList<>();
 
+        // Pre-loading the shared queue with requests
+        bookingQueue.add(new BookingRequest("Abhishek", "Single"));
+        bookingQueue.add(new BookingRequest("John", "Double"));
+        bookingQueue.add(new BookingRequest("Sarah", "Suite"));
+        bookingQueue.add(new BookingRequest("Emma", "Single"));
+        bookingQueue.add(new BookingRequest("Michael", "Double"));
+        bookingQueue.add(new BookingRequest("Sophia", "Suite"));
+
+        // Create threads to simulate concurrent guests/processors
+        Runnable bookingTask = () -> {
+            while (true) {
+                BookingRequest request = null;
+
+                // Synchronized block to safely retrieve from the shared queue
+                synchronized (bookingQueue) {
+                    if (!bookingQueue.isEmpty()) {
+                        request = bookingQueue.poll();
+                    } else {
+                        break; // Queue is empty, exit thread
+                    }
+                }
+
+                if (request != null) {
+                    inventory.allocateRoom(request.guestName);
+                }
+
+                // Short sleep to simulate processing time and increase interleaving
+                try { Thread.sleep(100); } catch (InterruptedException e) { break; }
+            }
+        };
+
+        // Initialize and start multiple threads
+        Thread t1 = new Thread(bookingTask);
+        Thread t2 = new Thread(bookingTask);
+        Thread t3 = new Thread(bookingTask);
+
+        t1.start();
+        t2.start();
+        t3.start();
+
+        // Wait for all threads to complete
         try {
-            // Step 1: Accept user input
-            System.out.print("Enter guest name: ");
-            String guestName = scanner.nextLine();
-
-            System.out.print("Enter room type (Single/Double/Suite): ");
-            String roomType = scanner.nextLine();
-
-            // Step 2: Validate input centrally (Fail-Fast)
-            validator.validate(guestName, roomType, inventory);
-
-            // Step 3: If valid, proceed with booking
-            bookingQueue.addRequest(guestName, roomType);
-            System.out.println("Booking processed successfully for " + guestName);
-
-        } catch (InvalidBookingException e) {
-            // Step 4: Handle domain-specific validation errors gracefully
-            System.out.println("Booking failed: " + e.getMessage());
-        } catch (Exception e) {
-            // Handle unexpected system errors
-            System.out.println("An unexpected error occurred: " + e.getMessage());
-        } finally {
-            // Step 5: Ensure system resources are released
-            scanner.close();
+            t1.join();
+            t2.join();
+            t3.join();
+        } catch (InterruptedException e) {
+            System.out.println("Main thread interrupted.");
         }
+
+        System.out.println("\nSimulation completed safely.");
     }
 }

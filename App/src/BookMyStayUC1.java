@@ -58,9 +58,9 @@ public class BookMyStayUC1 {
 
     public static void main(String[] args) {
 
-        System.out.println("=====  Book My Stay App  =====");
+        System.out.println("===== Book My Stay App =====");
         System.out.println("Version: v5.0");
-        System.out.println(" ============================ ");
+        System.out.println("============================");
 
         // Step 1: Initialize Booking Queue
         BookingRequestQueue bookingQueue = new BookingRequestQueue();

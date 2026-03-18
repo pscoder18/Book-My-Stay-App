@@ -1,87 +1,72 @@
-import java.util.*;
+import java.util.Scanner;
 
-// CLASS: Reservation
-class Reservation {
-
-    private String guestName;
-    private String roomType;
-
-    public Reservation(String guestName, String roomType) {
-        this.guestName = guestName;
-        this.roomType = roomType;
-    }
-
-    public String getGuestName() {
-        return guestName;
-    }
-
-    public String getRoomType() {
-        return roomType;
-    }
-}
-
-// CLASS: BookingHistory
-class BookingHistory {
-
-    // Stores confirmed reservations
-    private List<Reservation> confirmedReservations;
-
-    public BookingHistory() {
-        confirmedReservations = new ArrayList<>();
-    }
-
-    // Add reservation
-    public void addReservation(Reservation reservation) {
-        confirmedReservations.add(reservation);
-    }
-
-    // Get all reservations
-    public List<Reservation> getConfirmedReservations() {
-        return confirmedReservations;
-    }
-}
-
-// CLASS: BookingReportService
-class BookingReportService {
-
-    // Generate report
-    public void generateReport(BookingHistory history) {
-
-        System.out.println("\nBooking History Report");
-
-        List<Reservation> reservations = history.getConfirmedReservations();
-
-        if (reservations.isEmpty()) {
-            System.out.println("No bookings found.");
-            return;
-        }
-
-        for (Reservation r : reservations) {
-            System.out.println(
-                    "Guest: " + r.getGuestName() +
-                            ", Room Type: " + r.getRoomType()
-            );
-        }
-    }
-}
-
-// MAIN CLASS
-public class BookMyStayUC1 {
+public class BookMyStayUC1{
 
     public static void main(String[] args) {
+        // Display application header
+        System.out.println("Booking Validation");
 
-        System.out.println("===== Booking History and Reporting =====");
+        Scanner scanner = new Scanner(System.in);
 
-        // Create booking history
-        BookingHistory history = new BookingHistory();
+        // Initialize required components
+        RoomInventory inventory = new RoomInventory();
+        ReservationValidator validator = new ReservationValidator();
+        BookingRequestQueue bookingQueue = new BookingRequestQueue();
 
-        // Add sample reservations
-        history.addReservation(new Reservation("Abhi", "Single"));
-        history.addReservation(new Reservation("Subha", "Double"));
-        history.addReservation(new Reservation("Vamshi", "Suite"));
+        try {
+            // Prompt for User Input
+            System.out.print("Enter guest name: ");
+            String guestName = scanner.nextLine();
 
-        // Generate report
-        BookingReportService reportService = new BookingReportService();
-        reportService.generateReport(history);
+            System.out.print("Enter room type (Single/Double/Suite): ");
+            String roomType = scanner.nextLine();
+
+            // Validate the input using the domain-specific validator
+            validator.validate(guestName, roomType, inventory);
+
+            // If validation passes, process the booking
+            bookingQueue.enqueue(guestName, roomType);
+            System.out.println("Booking successful for: " + guestName);
+
+        } catch (InvalidBookingException e) {
+            // Handle domain-specific validation errors gracefully
+            System.out.println("Booking failed: " + e.getMessage());
+        } finally {
+            // Ensure resources are closed
+            scanner.close();
+        }
+    }
+}
+
+class InvalidBookingException extends Exception {
+    public InvalidBookingException(String message) {
+        super(message);
+    }
+}
+
+class ReservationValidator {
+
+    public void validate(String guestName, String roomType, RoomInventory inventory)
+            throws InvalidBookingException {
+
+        // Check for empty name
+        if (guestName == null || guestName.trim().isEmpty()) {
+            throw new InvalidBookingException("Guest name cannot be empty.");
+        }
+
+        // Strict case-sensitive check for room types
+        if (!(roomType.equals("Single") || roomType.equals("Double") || roomType.equals("Suite"))) {
+            throw new InvalidBookingException("Invalid room type selected.");
+        }
+    }
+}
+
+class RoomInventory {
+    // Logic for checking physical room availability would go here
+}
+
+class BookingRequestQueue {
+    public void enqueue(String name, String type) {
+        // Logic for adding to the processing queue would go here
     }
 }
